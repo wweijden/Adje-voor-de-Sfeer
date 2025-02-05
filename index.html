@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adje voor de Sfeer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #timeList, #inputSection {
+            margin-top: 20px;
+        }
+        table {
+            width: 50%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        input, button {
+            margin: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adje voor de Sfeer</h1>
+    
+    <div id="inputSection">
+        <h2>Voeg een tijd toe</h2>
+        <form id="timeForm">
+            <input type="text" id="name" placeholder="Naam" required>
+            <input type="text" id="time" placeholder="Tijd (bv. 12:34)" required>
+            <button type="submit">Toevoegen</button>
+        </form>
+        <button id="resetButton" style="display: none;">Reset Lijst</button>
+    </div>
+    
+    <div id="timeList">
+        <h2>Beste Tijden</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Tijd</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data wordt hier ingevoegd -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.getElementById("timeForm");
+            const tableBody = document.getElementById("tableBody");
+            const resetButton = document.getElementById("resetButton");
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewOnly = urlParams.get('view') === 'true';
+            const adminMode = urlParams.get('admin') === 'true';
+
+            function loadTimes() {
+                try {
+                    let times = localStorage.getItem("bestTimes");
+                    times = times ? JSON.parse(times) : [];
+
+                    tableBody.innerHTML = "";
+                    times.forEach(entry => {
+                        const row = `<tr><td>${entry.name}</td><td>${entry.time}</td></tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                } catch (error) {
+                    console.error("Fout bij laden van tijden:", error);
+                }
+            }
+
+            if (viewOnly) {
+                document.getElementById("inputSection").style.display = "none";
+            }
+
+            if (adminMode) {
+                resetButton.style.display = "block";
+            }
+
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                const name = document.getElementById("name").value.trim();
+                const time = document.getElementById("time").value.trim();
+
+                if (name && time) {
+                    try {
+                        let times = localStorage.getItem("bestTimes");
+                        times = times ? JSON.parse(times) : [];
+                        times.push({ name, time });
+                        localStorage.setItem("bestTimes", JSON.stringify(times));
+
+                        loadTimes();
+                        form.reset();
+                    } catch (error) {
+                        console.error("Fout bij opslaan van tijden:", error);
+                    }
+                }
+            });
+
+            resetButton.addEventListener("click", function() {
+                localStorage.removeItem("bestTimes");
+                loadTimes();
+            });
+
+            loadTimes();
+        });
+    </script>
+</body>
+</html>
