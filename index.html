@@ -9,6 +9,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 20px;
+            background: repeating-linear-gradient(180deg, blue, blue 50px, yellow 50px, yellow 100px);
         }
         #timeList, #inputSection {
             margin-top: 20px;
@@ -26,19 +27,22 @@
             margin: 10px;
             padding: 10px;
         }
+        .top3 {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
     </style>
 </head>
 <body>
     <h1>Adje voor de Sfeer</h1>
     
-    <div id="inputSection">
+    <div id="inputSection" style="display: none;">
         <h2>Voeg een tijd toe</h2>
         <form id="timeForm">
             <input type="text" id="name" placeholder="Naam" required>
             <input type="text" id="time" placeholder="Tijd (bv. 12:34)" required>
             <button type="submit">Toevoegen</button>
         </form>
-        <button id="resetButton" style="display: none;">Reset Lijst</button>
     </div>
     
     <div id="timeList">
@@ -48,6 +52,7 @@
                 <tr>
                     <th>Naam</th>
                     <th>Tijd</th>
+                    <th>Datum</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -60,9 +65,8 @@
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById("timeForm");
             const tableBody = document.getElementById("tableBody");
-            const resetButton = document.getElementById("resetButton");
+            const inputSection = document.getElementById("inputSection");
             const urlParams = new URLSearchParams(window.location.search);
-            const viewOnly = urlParams.get('view') === 'true';
             const adminMode = urlParams.get('admin') === 'true';
 
             function loadTimes() {
@@ -71,11 +75,14 @@
                     times = times ? JSON.parse(times) : [];
                     
                     // Sorteer tijden oplopend
-                    times.sort((a, b) => a.time.localeCompare(b.time));
+                    times.sort((a, b) => {
+                        return a.time.localeCompare(b.time, undefined, { numeric: true });
+                    });
                     
                     tableBody.innerHTML = "";
-                    times.forEach(entry => {
-                        const row = `<tr><td>${entry.name}</td><td>${entry.time}</td></tr>`;
+                    times.forEach((entry, index) => {
+                        const rowClass = index < 3 ? "top3" : "";
+                        const row = `<tr class='${rowClass}'><td>${entry.name}</td><td>${entry.time}</td><td>${entry.date}</td></tr>`;
                         tableBody.innerHTML += row;
                     });
                 } catch (error) {
@@ -83,24 +90,21 @@
                 }
             }
 
-            if (viewOnly) {
-                document.getElementById("inputSection").style.display = "none";
-            }
-
             if (adminMode) {
-                resetButton.style.display = "block";
+                inputSection.style.display = "block";
             }
 
             form.addEventListener("submit", function(event) {
                 event.preventDefault();
                 const name = document.getElementById("name").value.trim();
                 const time = document.getElementById("time").value.trim();
+                const date = new Date().toLocaleDateString();
 
                 if (name && time) {
                     try {
                         let times = localStorage.getItem("bestTimes");
                         times = times ? JSON.parse(times) : [];
-                        times.push({ name, time });
+                        times.push({ name, time, date });
                         localStorage.setItem("bestTimes", JSON.stringify(times));
 
                         loadTimes();
@@ -109,11 +113,6 @@
                         console.error("Fout bij opslaan van tijden:", error);
                     }
                 }
-            });
-
-            resetButton.addEventListener("click", function() {
-                localStorage.removeItem("bestTimes");
-                loadTimes();
             });
 
             loadTimes();
