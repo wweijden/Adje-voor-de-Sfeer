@@ -69,7 +69,10 @@
                 try {
                     let times = localStorage.getItem("bestTimes");
                     times = times ? JSON.parse(times) : [];
-
+                    
+                    // Sorteer tijden oplopend
+                    times.sort((a, b) => a.time.localeCompare(b.time));
+                    
                     tableBody.innerHTML = "";
                     times.forEach(entry => {
                         const row = `<tr><td>${entry.name}</td><td>${entry.time}</td></tr>`;
